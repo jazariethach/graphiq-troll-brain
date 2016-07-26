@@ -10,7 +10,7 @@
 // 				level: someValue
 // 			}
 
-// Board is a 15x15 matrix
+// Board is a 16x16 matrix
 
 
 function Stacker(){
@@ -46,17 +46,17 @@ this.createMap = function() {
 	}
 }
 
-// this.nextToTower = function(cell){
-// 	if (cell.left.type == GOLD || cell.right.type == GOLD ||  cell.up.type == GOLD || cell.down.type == GOLD) {
-// 		console.log("Next to tower!");
-// 	}
-// }
-
-this.mapSurroundings = function() {
-
+this.nextToItem = function(cell, item) {
+	if (cell["left"]["type"] == item || cell["up"]["type"] == item || 
+		cell["right"]["type"] == item || cell["down"]["type"] == item) {
+		console.log("Next to item: " + item);
+		return true;
+	} else {
+		return false;
+	}
 }
 
-this.ignoreWalls = function(cell){
+this.ignoreWalls = function(cell) {
 	if (cell["left"]["type"] == WALL){
 		cellMap[(n+x-1)%n][y] = true;
 	} 
@@ -75,7 +75,6 @@ this.isVisited = function(dir) {
 	var check = true;
 	switch(dir) {
 		case "left":
-			console.log(x-1);
 			check = cellMap[(n+x-1)%n][y];
 			break;
 		case "up":
@@ -140,6 +139,26 @@ this.takeStep = function(dir){
 }
 
 this.dfsOnItem = function(cell, item){
+	
+	if (item == GOLD) {
+		if (cell["left"]["type"] == GOLD) {
+			towerX = (n+x-1)%n;
+			towerY = y;
+		} else if (cell["up"]["type"] == GOLD) {
+			towerX = x;
+			towerY = (n+y-1)%y;
+		} else if (cell["right"]["type"] == GOLD) {
+			towerX = (n+x+1)%n;
+			towerY = y;
+		} else if (cell["down"]["type"] == WALL) {
+			towerX = x;
+			towerY = (n+y+1)%y;
+		}
+		if(this.nextToItem(cell, item)){
+			return "drop";
+		}
+	}
+
 	cellMap[x][y] = true;
 	this.ignoreWalls(cell);
 	var dir = null;

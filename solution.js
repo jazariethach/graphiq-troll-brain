@@ -35,6 +35,24 @@ var backTrace = [], stairsLeft = [];  // treat these arrays like stacks
 var firstStep = true, holdingBlock = false;
 var buildLevel = 1; // represents the stair level we are building
 
+// Stacker's main function
+this.turn = function(cell){
+	currentCell = cell;
+
+	if (firstStep) {
+		firstStep = false;
+		cellMap = this.createMap();
+		this.ignoreWalls(cell);
+	}
+
+	// The 7th stair is placed, get that gold!
+	if (buildLevel > 8) {
+		return this.goUpStairs("up");
+	}
+
+	return this.dfsOnItem(cell, searchFor);
+}
+
 // Creates an nxn matrix to map the grid, cells initialized to false if unvisited
 this.createMap = function() {
 	newGrid = new Array(n);
@@ -76,16 +94,16 @@ this.nextToItem = function(cell, item) {
 }
 
 this.ignoreWalls = function(cell) {
-	if (cell["left"]["type"] == WALL || cell["left"]["level"]-1 > cell["level"]){
+	if (cell["left"]["type"] == WALL){
 		cellMap[(n+x-1)%n][y] = true;
 	} 
-	if (cell["up"]["type"] == WALL || cell["up"]["level"]-1 > cell["level"]) {
+	if (cell["up"]["type"] == WALL) {
 		cellMap[x][(n+y-1)%n] = true;
 	}
-	if (cell["right"]["type"] == WALL || cell["right"]["level"]-1 > cell["level"]) {
+	if (cell["right"]["type"] == WALL) {
 		cellMap[(n+x+1)%n][y] = true;
 	}
-	if (cell["down"]["type"] == WALL || cell["down"]["level"]-1 > cell["level"]) {
+	if (cell["down"]["type"] == WALL) {
 		cellMap[x][(n+y+1)%n] = true;
 	}
 }
@@ -115,7 +133,6 @@ this.isVisited = function(dir) {
 // Helper function for backtacing steps
 this.getOppositeStep = function(dir) {
 	var opposite = "";
-	// var opposite = "drop";
 	switch(dir) {
 		case "left":
 			opposite = "right";
@@ -134,6 +151,34 @@ this.getOppositeStep = function(dir) {
 			break;
 	}
 	return opposite;
+}
+
+this.takeStep = function(dir) {
+	switch(dir) {
+		case "left":
+			x = (n+x-1)%n;
+			break;
+		case "up":
+			y = (n+y-1)%n;
+			break;
+		case "right":
+			x = (n+x+1)%n;
+			break;
+		case "down":
+			y = (n+y+1)%n;
+			break;
+		default:
+			console.log("Incorrect direction given: " + dir);
+			dir = "" 
+			break;
+	}
+	return dir;
+}
+
+this.fillStairsLeft = function(currentLevel) {
+	for(var i=currentLevel; i<8; i++) {
+		stairsLeft.push(i);
+	}
 }
 
 // The number stair you are standing on, 0 if on ground
@@ -203,37 +248,7 @@ this.goDownStairs = function() {
 		backTrace = [];
 		backTrace.push("left");
 		cellMap = this.createMap();
-		console.log("should be true " + cellMap[x][y]);
 		return this.takeStep("left");
-	}
-}
-
-this.takeStep = function(dir) {
-	switch(dir) {
-		case "left":
-			x = (n+x-1)%n;
-			break;
-		case "up":
-			y = (n+y-1)%n;
-			break;
-		case "right":
-			x = (n+x+1)%n;
-			break;
-		case "down":
-			y = (n+y+1)%n;
-			break;
-		default:
-			console.log("Incorrect direction given: " + dir);
-			dir = "" // waste the turn
-			// dir = "drop" // waste the turn
-			break;
-	}
-	return dir;
-}
-
-this.fillStairsLeft = function(currentLevel) {
-	for(var i=currentLevel; i<8; i++) {
-		stairsLeft.push(i);
 	}
 }
 
@@ -286,7 +301,6 @@ this.dfsOnItem = function(cell, item){
 					}
 
 					holdingBlock = false;
-					console.log("put down block");
 					return "drop";
 				}
 			}
@@ -296,15 +310,9 @@ this.dfsOnItem = function(cell, item){
 			if (backTrace.length > 0) {
 				return this.takeStep(this.getOppositeStep(backTrace.pop()));
 			} 
-			// else {
-			// 	// dunno if this ever hits
-			// 	holdingBlock = false;
-			// 	return "drop";
-			// }
 		} else if (!holdingBlock && cell["type"] == BLOCK && stairLevel == 0) {
 			cellMap = this.createMap();
 			holdingBlock = true;
-			console.log("picked up block");
 			return "pickup";
 		}
 
@@ -315,27 +323,13 @@ this.dfsOnItem = function(cell, item){
 		this.ignoreWalls(cell);
 	}
 
-	var dir = null;
 	var nextTo = this.nextToItem(cell, item);
 	if (!holdingBlock && item == BLOCK && nextTo != "" && !this.isVisited(nextTo)) {
-		console.log("block is " + nextTo);
-		console.log("visited: " + cellMap[(n+x+1)%n][y]);
-		console.log((n+towerX+1)%n + "=" + (n+x+1)%n + " " + towerY + "=" + y);
 		backTrace.push(nextTo);
 		return this.takeStep(nextTo);		
 	}
-	// if (item == BLOCK) {
-	// 	for(var i=0; i<directions.length; i++) {
-	// 		dir = directions[i];
-	// 		if (cell[dir]["type"] == BLOCK && !this.isVisited(dir)) {
-	// 			console.log(dir);
-	// 			backTrace.push(dir);
-	// 			return this.takeStep(dir);
-	// 		}
-	// 	}
-	// }
 
-
+	var dir = null;
 	for(var i=0; i<directions.length; i++) {
 		dir = directions[i];
 		if (!this.isVisited(dir)) {
@@ -343,30 +337,7 @@ this.dfsOnItem = function(cell, item){
 			return this.takeStep(dir);
 		}
 	}
-	console.log("bt");
 	return this.takeStep(this.getOppositeStep(backTrace.pop()));
 }
 
-this.turn = function(cell){
-	currentCell = cell;
-
-	if (firstStep) {
-		firstStep = false;
-		cellMap = this.createMap();
-		this.ignoreWalls(cell);
-	}
-
-	// The 7th stair is placed, get that gold!
-	if (buildLevel > 8) {
-		return this.goUpStairs("up");
-	}
-
-	return this.dfsOnItem(cell, searchFor);
 }
-
-// More wizardry here
-// EVEN MORE WIZARD
-
-}
-
-

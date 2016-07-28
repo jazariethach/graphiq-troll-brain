@@ -283,7 +283,7 @@ this.dfsOnItem = function(cell, item){
 					console.log(stairsLeft.toString());
 
 					if (cell["type"] == BLOCK && cell["level"] == buildLevel-1) {
-						return this.dfsOnItem(cell, BLOCK);
+						return this.dfsOnItem(cell, BLOCK); 
 					}
 
 					holdingBlock = false;

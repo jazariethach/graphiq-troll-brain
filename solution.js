@@ -187,7 +187,6 @@ this.goUpStairs = function() {
 
 this.goDownStairs = function() {
 	var stairLevel = this.getStairLevel();
-	console.log("stair level is " + stairLevel);
 	if (stairLevel == 7) {
 		return this.takeStep("right");
 	} else if (stairLevel == 6) {
@@ -274,10 +273,17 @@ this.dfsOnItem = function(cell, item){
 				} else if (target > stairLevel) {
 					return this.goUpStairs();
 				} else {
+					console.log(stairsLeft.toString());
 					stairsLeft.pop();	// remove target stair from stairsLeft
+					console.log(stairsLeft.toString());
 					if (stairsLeft.length == 0) {
 						this.fillStairsLeft(buildLevel);
 						buildLevel++;
+					}
+					console.log(stairsLeft.toString());
+
+					if (cell["type"] == BLOCK && cell["level"] == buildLevel-1) {
+						return this.dfsOnItem(cell, BLOCK);
 					}
 
 					holdingBlock = false;
